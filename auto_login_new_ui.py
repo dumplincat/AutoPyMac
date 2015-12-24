@@ -1,9 +1,12 @@
-
 import atomac
 import time
 import sys
 import datetime
 import os
+from appscript import app
+
+password = 'Test!123'
+country_name_dict = {'France': '33185642659', 'Germany': '49691131126', 'Netherlands': '31201127373', 'United Kindom': '441210430002', 'United States': '18552030004', 'Canada': '8774030001', 'Ireland': '353116000015', 'Spain': '34500000021', 'Switzerland': '41220000172'}
 
 
 def wait_until_loggedin(timeout_seconds):
@@ -30,6 +33,14 @@ def wait_until_loggedin(timeout_seconds):
             timeout_seconds -= 1
 
 
+def select_country_by_name(name):
+    current_win = automator.windows()[0]
+    select_country_btn = current_win.findFirstR(AXRole='AXPopUpButton')
+    select_country_btn.Press()
+    menu_item = currentWindow.findFirstR(AXRole='AXMenuItem', AXTitle=name)
+    menu_item.Press()
+
+
 def wait_login_screen(timeout_seconds):
     print '----- wait_login_screen()'
     while True:
@@ -53,6 +64,7 @@ def wait_login_screen(timeout_seconds):
             # print 'Not Found'
             time.sleep(1)
             timeout_seconds -= 1
+
 
 if __name__ == "__main__":
     args = sys.argv
@@ -81,33 +93,30 @@ if __name__ == "__main__":
         passwordField = currentWindow.findFirstR(AXRole='AXTextField', AXPlaceholderValue='Password')
         loginBtn = currentWindow.findFirstR(AXRole='AXButton', AXTitle='Login')
         # time.sleep(5)
+        # change country
+        i = index % len(country_name_dict)
+        country_name = country_name_dict.keys()[i]
+        phone_num = country_name_dict.get(country_name)
+        select_country_by_name(country_name)
+        time.sleep(1)
         currentWindow.clickMouseButtonLeft({980.00, 461.00})
         time.sleep(1)
-        phoneNumberField.sendKeys('16505394171')
+        phoneNumberField.sendKeys(phone_num)
         currentWindow.clickMouseButtonLeft({980.00, 550.00})
         time.sleep(1)
-        passwordField.sendKeys('19860426')
+        passwordField.sendKeys("Test")
+        app('System Events').keystroke('!')
+        passwordField.sendKeys("123")
         loginBtn.Press()
 
-        wait_until_loggedin(15)
+        wait_until_loggedin(30)
         timeStamp = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
         print 'timeStamp: ', timeStamp
         os.system('screencapture -R1540,23,360,662 ' + timeStamp + '.jpg')
         currentWindow = automator.windows()[0]
-        currentWindow.clickMouseButtonLeft({1713.00, 68.00})
-        time.sleep(1)
-        currentWindow.clickMouseButtonLeft({1740.00, 140.00})
+        currentWindow.clickMouseButtonLeft({1640.00, 65.00})
+        time.sleep(2)
+        currentWindow.clickMouseButtonLeft({1608.00, 141.00})
         wait_login_screen(30)
         index += 1
         print 'Test Passed: %d Times' % index
-
-
-
-
-
-
-
-
-
-
-
