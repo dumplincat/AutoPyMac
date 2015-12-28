@@ -6,7 +6,7 @@ import os
 from appscript import app
 
 password = 'Test!123'
-country_name_dict = {'France': '33185642659', 'Germany': '49691131126', 'Netherlands': '31201127373', 'United Kindom': '441210430002', 'United States': '18552030004', 'Canada': '8774030001', 'Ireland': '353116000015', 'Spain': '34500000021', 'Switzerland': '41220000172'}
+country_name_dict = {'France': '33185642659', 'Germany': '49691131126', 'Netherlands': '31201127373', 'United Kingdom': '441210430002', 'United States': '18552030004', 'Canada': '8774030001', 'Ireland': '353116000015', 'Spain': '34500000021', 'Switzerland': '41220000172'}
 
 
 def wait_until_loggedin(timeout_seconds):
@@ -24,9 +24,11 @@ def wait_until_loggedin(timeout_seconds):
         settings_btn = current_window.findFirstR(AXRole='AXButton', AXTitle='Settings')
         print 'timeLeft: ', timeout_seconds
         if settings_btn is not None and timeout_seconds > 0:
-            return
+            return True
         elif timeout_seconds <= 0:
             print 'Wait login timeout'
+            os.system('screencapture -R695,379,1225,801 ' + 'Log_In_Timeout_' + timeStamp + '.jpg')
+            return False
         else:
             # print 'Not Found'
             time.sleep(1)
@@ -38,6 +40,7 @@ def select_country_by_name(name):
     select_country_btn = current_win.findFirstR(AXRole='AXPopUpButton')
     select_country_btn.Press()
     menu_item = currentWindow.findFirstR(AXRole='AXMenuItem', AXTitle=name)
+    print 'country name: ' + name
     menu_item.Press()
 
 
@@ -66,6 +69,17 @@ def wait_login_screen(timeout_seconds):
             timeout_seconds -= 1
 
 
+def launch_app():
+    global automator, currentWindow
+    atomac.launchAppByBundleId('us.zoom.ringcentral')
+    time.sleep(1)
+    automator = atomac.getAppRefByBundleId('us.zoom.ringcentral')
+    currentWindow = automator.windows()[0]
+    signInBtn = currentWindow.findFirstR(AXRole='AXButton', AXTitle='Sign In')
+    signInBtn.Press()
+    wait_login_screen(15)
+
+
 if __name__ == "__main__":
     args = sys.argv
     loopNumber = 2
@@ -76,13 +90,9 @@ if __name__ == "__main__":
         quit()
 
     print 'loop for %d times' % loopNumber
-    atomac.launchAppByBundleId('us.zoom.ringcentral')
-    time.sleep(1)
-    automator = atomac.getAppRefByBundleId('us.zoom.ringcentral')
-    currentWindow = automator.windows()[0]
-    signInBtn = currentWindow.findFirstR(AXRole='AXButton', AXTitle='Sign In')
-    signInBtn.Press()
-    wait_login_screen(15)
+    atomac.terminateAppByBundleId('us.zoom.ringcentral')
+    time.sleep(3)
+    launch_app()
 
     index = 0
     while index < loopNumber:
@@ -109,14 +119,30 @@ if __name__ == "__main__":
         passwordField.sendKeys("123")
         loginBtn.Press()
 
-        wait_until_loggedin(30)
+        status = wait_until_loggedin(30)
+        if not status:
+            atomac.terminateAppByBundleId('us.zoom.ringcentral')
+            time.sleep(3)
+            launch_app()
+            continue
+
         timeStamp = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
         print 'timeStamp: ', timeStamp
         os.system('screencapture -R1540,23,360,662 ' + timeStamp + '.jpg')
         currentWindow = automator.windows()[0]
-        currentWindow.clickMouseButtonLeft({1640.00, 65.00})
-        time.sleep(2)
-        currentWindow.clickMouseButtonLeft({1608.00, 141.00})
+        btn = currentWindow.findAll(AXRole='AXGroup')[0].findAll(AXRole='AXButton')[1]
+        time.sleep(1)
+        try:
+            btn.Press()
+        except:
+            print('expected error')
+        currentWindow = automator.windows()[0]
+        # btn = currentWindow.findAll(AXRole='AXGroup')[0]
+        # print btn.findAll()
+        # currentWindow.clickMouseButtonLeft({1640.00, 65.00})
+        time.sleep(1)
+        # currentWindow.findAll(AXRole='AXGroup')[0].findAll(AXRole='AXMenuItem', AXTitle='Log Out')[0].Press()
+        currentWindow.clickMouseButtonLeft({1730.00, 141.00})
         wait_login_screen(30)
         index += 1
         print 'Test Passed: %d Times' % index
